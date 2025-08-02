@@ -2,7 +2,7 @@ import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 
 import styles from './ArticleParamsForm.module.scss';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Select } from 'src/ui/select';
 import {
 	ArticleStateType,
@@ -15,6 +15,7 @@ import {
 } from 'src/constants/articleProps';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
+import clsx from 'clsx';
 
 export const ArticleParamsForm = ({
 	onApply,
@@ -64,13 +65,33 @@ export const ArticleParamsForm = ({
 		onReset();
 	};
 
+const formRef = useRef<HTMLDivElement>(null)
+const arrowButtonRef = useRef<HTMLDivElement>(null)
+
+useEffect(() => {
+	if (!isOpenForm) return
+
+	const handleClickOutside = (event: MouseEvent) => {
+		if (arrowButtonRef.current?.contains(event.target as Node) || 
+				formRef.current?.contains(event.target as Node)) 
+				{
+			return;
+		}
+		setIsOpenForm(false)
+	}
+	document.addEventListener('mousedown', handleClickOutside);
+	return () => {
+		document.removeEventListener('mousedown', handleClickOutside)
+	}
+}, [isOpenForm])
+
 	return (
 		<>
-			<ArrowButton isOpen={isOpenForm} onClick={toggleForm} />
-			<aside
-				className={`${styles.container} ${
-					isOpenForm ? styles.container_open : ''
-				}`}>
+			<div ref={arrowButtonRef}>
+			<ArrowButton isOpen={isOpenForm} onClick={toggleForm}/>
+			</div>
+			{isOpenForm && (<div className={styles.overlay} onClick={() => setIsOpenForm(false)} />)}
+			<aside ref={formRef} className={clsx(styles.container, isOpenForm && styles.container_open)}>
 				<form
 					className={styles.form}
 					onSubmit={handleSubmit}
